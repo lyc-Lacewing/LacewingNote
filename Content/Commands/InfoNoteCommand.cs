@@ -15,7 +15,10 @@ namespace LacewingNote.Content.Commands
 
         public override void Action(CommandCaller caller, string input, string[] args)
         {
-            caller.Player.GetModPlayer<NotePlayer>().InfoNote.InsertWord(input.Remove(0, 6));
+            if (args.Length > 0)
+            {
+                caller.Player.GetModPlayer<NotePlayer>().InfoNote.RunCommand(args);
+            }
         }
     }
 }

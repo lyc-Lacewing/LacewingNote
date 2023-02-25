@@ -379,26 +379,26 @@ namespace LacewingNote.Common
             public const char Escaper = '\\';
             public const char Trigger = '.';
 
-            public const string ToWord = "t";
-            public const string ToLine = "T";
+            public const char ToWord = 't';
+            public const char ToLine = 'T';
 
-            public const string InsertWord = "i";
-            public const string InsertLine = "I";
-            public const string AppendWord = "a";
-            public const string AppendLine = "A";
-            public const string NewLineBelow = "o";
-            public const string NewLineAbove = "O";
-            public const string Undo = "z";
-            public const string Redo = "Z";
-            public const string ReplaceNext = "r";
-            public const string ReplaceAll = "R";
-            public const string DeleteWord = "d";
-            public const string DeleteLine = "D";
-            public const string Clear = "c";
-            public const string ClearAll = "C";
+            public const char InsertWord = 'i';
+            public const char InsertLine = 'I';
+            public const char AppendWord = 'a';
+            public const char AppendLine = 'A';
+            public const char NewLineBelow = 'o';
+            public const char NewLineAbove = 'O';
+            public const char Undo = 'z';
+            public const char Redo = 'Z';
+            public const char ReplaceNext = 'r';
+            public const char ReplaceAll = 'R';
+            public const char DeleteWord = 'd';
+            public const char DeleteLine = 'D';
+            public const char Clear = 'c';
+            public const char ClearAll = 'C';
 
-            public const string Copy = "cc";
-            public const string Cut = "cx";
+            public const char Copy = 'x';
+            public const char Cut = 'X';
         }
         /// <summary>
         /// Is the text considered as a command
@@ -456,25 +456,176 @@ namespace LacewingNote.Common
         {
             return literal.Replace("\\.", ".");
         }
-
+        /// <summary>
+        /// Parse op with its numeric params for cursor movement
+        /// </summary>
+        /// <param name="op"></param>
+        /// <param name="moveTo">Cursor should move to</param>
+        /// <param name="moveBy">Cursor should move by</param>
+        /// <returns></returns>
+        private static int ParseNumOp(string op, out bool moveTo, out bool moveBy)
+        {
+            int dir = 1, num = 0;
+            moveTo = false; moveBy = false;
+            if (op.Length < 3)
+            {
+                return 0;
+            }
+            string para = op.Substring(2);
+            if (para[0] == '+')
+            {
+                moveBy = true;
+                para = para.Substring(1);
+            }
+            else if (para[0] == '-')
+            {
+                moveBy = true;
+                dir = -1;
+                para = para.Substring(1);
+            }
+            if (!int.TryParse(para, out num))
+            {
+                return 0;
+            }
+            moveTo = !moveBy;
+            return num * dir;
+        }
+        /// <summary>
+        /// Prepend text with args
+        /// </summary>
+        /// <param name="args"></param>
+        public void DoInsertWord(string[] args)
+        {
+            string[] largs = args.Take(2).ToArray();
+            int num = ParseNumOp(largs[0], out bool to, out bool by);
+            if (to)
+            {
+                CursorToPreWord(num);
+            }
+            else if (by)
+            {
+                CursorToPreWord(CursorAtWord() + num);
+            }
+            InsertWord(ParseLiteral(largs[1]));
+        }
+        /// <summary>
+        /// Prepend text with args
+        /// </summary>
+        /// <param name="args"></param>
+        public void DoInsertLine(string[] args)
+        {
+            string[] largs = args.Take(2).ToArray();
+            int num = ParseNumOp(largs[0], out bool to, out bool by);
+            if (to)
+            {
+                CursorToPreLine(num);
+            }
+            else if (by)
+            {
+                CursorToPreLine(CursorAtLine() + num);
+            }
+            InsertLine(ParseLiteral(largs[1]));
+        }
+        /// <summary>
+        /// Append text with args
+        /// </summary>
+        /// <param name="args"></param>
+        public void DoAppendWord(string[] args)
+        {
+            string[] largs = args.Take(2).ToArray();
+            int num = ParseNumOp(largs[0], out bool to, out bool by);
+            if (to)
+            {
+                CursorToApWord(num);
+            }
+            else if (by)
+            {
+                CursorToApWord(CursorAtWord() + num);
+            }
+            AppendWord(ParseLiteral(largs[1]));
+        }
+        /// <summary>
+        /// Append text with args
+        /// </summary>
+        /// <param name="args"></param>
+        public void DoAppendLine(string[] args)
+        {
+            string[] largs = args.Take(2).ToArray();
+            int num = ParseNumOp(largs[0], out bool to, out bool by);
+            if (to)
+            {
+                CursorToApLine(num);
+            }
+            else if (by)
+            {
+                CursorToApLine(CursorAtWord() + num);
+            }
+            InsertLine(ParseLiteral(largs[1]));
+        }
+        /// <summary>
+        /// Run commands in given args
+        /// </summary>
+        /// <param name="args"></param>
         public void RunCommand(string[] args)
         {
-            string[] largs = ParseArgs(args);
-            for (int i = 0; i < largs.Length; i++)
+            List<string> largs = ParseArgs(args).ToList();
+            while (largs.Count > 0)
             {
-                string la = largs[i];
-                if (i == 0 && !IsCommand(la))
+                string la = largs[0];
+                string[] thisArgs = new string[2];
+                bool withLiteral = largs.Count > 1 && !IsCommand(largs[1]);
+                if (withLiteral)
                 {
-                    Renew(la);
+                    thisArgs = largs.Take(2).ToArray();
+                }
+                if (!IsCommand(la))
+                {
+                    Renew(ParseLiteral(la));
+                    largs.RemoveAt(0);
                     continue;
                 }
-                if (IsCommand(la))
+                char detLa = la[1];
+                switch (detLa)
                 {
-                    if (i + 1 > largs.Length)
-                    {
+                    default:
+                        largs.RemoveAt(0);
                         break;
-                    }
-
+                    case Ops.InsertWord:
+                        if (withLiteral)
+                        {
+                            DoInsertWord(thisArgs);
+                            largs.RemoveRange(0, 2);
+                            break;
+                        }
+                        largs.RemoveAt(0);
+                        break;
+                    case Ops.InsertLine:
+                        if (withLiteral)
+                        {
+                            DoInsertLine(thisArgs);
+                            largs.RemoveRange(0, 2);
+                            break;
+                        }
+                        largs.RemoveAt(0);
+                        break;
+                    case Ops.AppendWord:
+                        if (!withLiteral)
+                        {
+                            DoAppendWord(thisArgs);
+                            largs.RemoveRange(0, 2);
+                            break;
+                        }
+                        largs.RemoveAt(0);
+                        break;
+                    case Ops.AppendLine:
+                        if (withLiteral)
+                        {
+                            DoAppendLine(thisArgs);
+                            largs.RemoveRange(0, 2);
+                            break;
+                        }
+                        largs.RemoveAt(0);
+                        break;
                 }
             }
         }
