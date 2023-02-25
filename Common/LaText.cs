@@ -10,11 +10,13 @@ namespace LacewingNote.Common
 {
     public struct LaText
     {
-        private string[] cache;
-        private int cIndex { get { return Math.Clamp(cIndex, 0, cache.Length - 1); } set { value = Math.Clamp(value, 0, cache.Length - 1); } }
-        private int cursor { get { return Math.Clamp(cursor, 0, Text.Length); } set { value = Math.Clamp(value, 0, Text.Length); } }
+        private string[] cache = new string[0];
+        private int cIndex = 0;
+        private int CIndex { get { return Math.Clamp(this.cIndex, 0, cache.Length - 1); } set { cIndex = Math.Clamp(value, 0, cache.Length - 1); } }
+        private int cursor = 0;
+        private int Cursor { get { return Math.Clamp(this.cursor, 0, Text.Length); } set { cursor = Math.Clamp(value, 0, Text.Length); } }
 
-        public string Text { get => cache[cIndex]; }
+        public string Text { get => cache[CIndex]; }
         public string[] Words { get => Text.Split(' '); }
         public string[] Lines { get => Text.Split('\n'); }
         public int CacheLength { get => cache.Length; }
@@ -23,8 +25,8 @@ namespace LacewingNote.Common
         public LaText(string[] text = default, int cacheLength = 9)
         {
             this.cache = new string[cacheLength];
-            this.cIndex = 0;
-            this.cursor = 0;
+            this.CIndex = 0;
+            this.Cursor = 0;
         }
         #endregion
 
@@ -79,7 +81,7 @@ namespace LacewingNote.Common
         /// <returns></returns>
         private int CursorCharIndex()
         {
-            return Math.Min(cursor, Text.Length - 1);
+            return Math.Min(Cursor, Text.Length - 1);
         }
         /// <summary>
         /// Length of num of words for cursor
@@ -103,7 +105,7 @@ namespace LacewingNote.Common
         {
             for (int i = 0; i < Words.Length; i++)
             {
-                if (WordsLength(i) >= cursor)
+                if (WordsLength(i) >= Cursor)
                 {
                     return i;
                 }
@@ -116,7 +118,7 @@ namespace LacewingNote.Common
         /// <param name="num"></param>
         private void CursorToPreWord(int num = 1)
         {
-            cursor = WordsLength(num - 1);
+            Cursor = WordsLength(num - 1);
         }
         /// <summary>
         /// Move curdor to the end of the {num}th word
@@ -124,7 +126,7 @@ namespace LacewingNote.Common
         /// <param name="num"></param>
         private void CursorToApWord(int num = 1)
         {
-            cursor = WordsLength(num);
+            Cursor = WordsLength(num);
         }
         /// <summary>
         /// Length of num lines for cursor
@@ -148,7 +150,7 @@ namespace LacewingNote.Common
         {
             for (int i = 0; i < Lines.Length; i++)
             {
-                if (LineLength(i) >= cursor)
+                if (LineLength(i) >= Cursor)
                 {
                     return i;
                 }
@@ -161,7 +163,7 @@ namespace LacewingNote.Common
         /// <param name="num"></param>
         private void CursorToPreLine(int num = 1)
         {
-            cursor = LineLength(num - 1);
+            Cursor = LineLength(num - 1);
         }
         /// <summary>
         /// Move cursor to the end of the {num}th line
@@ -169,7 +171,7 @@ namespace LacewingNote.Common
         /// <param name="num"></param>
         private void CursorToApLine(int num = 1)
         {
-            cursor = LineLength(num);
+            Cursor = LineLength(num);
         }
         #endregion
 
@@ -180,10 +182,10 @@ namespace LacewingNote.Common
         /// <param name="newText"></param>
         public void Renew(string newText)
         {
-            MoveCache(-cIndex + 1);
+            MoveCache(-CIndex + 1);
             cache[0] = newText;
-            cIndex = 0;
-            cursor = Text.Length;
+            CIndex = 0;
+            Cursor = Text.Length;
         }
         /// <summary>
         /// Increase cIndex by step
@@ -191,11 +193,11 @@ namespace LacewingNote.Common
         /// <param name="step"></param>
         public void Undo(int step = 1)
         {
-            if (cache.Length <= 0 || step < 1 || cIndex + step > cache.Length - 1)
+            if (cache.Length <= 0 || step < 1 || CIndex + step > cache.Length - 1)
             {
                 return;
             }
-            cIndex += step;
+            CIndex += step;
         }
         /// <summary>
         /// Decrease cIndex by step
@@ -203,12 +205,12 @@ namespace LacewingNote.Common
         /// <param name="step"></param>
         public void Redo(int step = 1)
         {
-            if (cache.Length <= 0 || step < 1 || cIndex - step < 0)
+            if (cache.Length <= 0 || step < 1 || CIndex - step < 0)
             {
                 return;
             }
-            cIndex -= step;
-            cursor = Text.Length;
+            CIndex -= step;
+            Cursor = Text.Length;
         }
         /// <summary>
         /// Insert text at index, cached
@@ -218,12 +220,12 @@ namespace LacewingNote.Common
         public void Add(int start, string text)
         {
             Renew(Text.Insert(start, text));
-            cursor = start + text.Length;
+            Cursor = start + text.Length;
         }
         public void Remove(int start, int count)
         {
             Renew(Text.Remove(start, count));
-            cursor = start;
+            Cursor = start;
         }
         /// <summary>
         /// Prepend text at the current word
@@ -232,7 +234,7 @@ namespace LacewingNote.Common
         public void InsertWord(string text)
         {
             CursorToPreWord(CursorAtWord());
-            Add(cursor, text);
+            Add(Cursor, text);
         }
         /// <summary>
         /// Prepend text at the current line
@@ -241,7 +243,7 @@ namespace LacewingNote.Common
         public void InsertLine(string text)
         {
             CursorToPreLine(CursorAtLine());
-            Add(cursor, text);
+            Add(Cursor, text);
         }
         /// <summary>
         /// Append text at the current word
@@ -250,7 +252,7 @@ namespace LacewingNote.Common
         public void AppendWord(string text)
         {
             CursorToApWord(CursorAtWord());
-            Add(cursor, text);
+            Add(Cursor, text);
         }
         /// <summary>
         /// Append text at the current line
@@ -259,7 +261,7 @@ namespace LacewingNote.Common
         public void AppendLine(string text)
         {
             CursorToApLine(CursorAtLine());
-            Add(cursor, text);
+            Add(Cursor, text);
         }
         /// <summary>
         /// Start a new line below the current line with text given
@@ -268,7 +270,7 @@ namespace LacewingNote.Common
         public void NewLineBelow(string text)
         {
             CursorToApLine();
-            Add(cursor, string.Join("", '\n', text));
+            Add(Cursor, string.Join("", '\n', text));
         }
         /// <summary>
         /// Start a new line above the current line with text given
@@ -277,7 +279,7 @@ namespace LacewingNote.Common
         public void NewLineAbove(string text)
         {
             CursorToPreLine();
-            Add(cursor, string.Join("", text, '\n'));
+            Add(Cursor, string.Join("", text, '\n'));
         }
         /// <summary>
         /// Replace the first occurence of find with replace and put cursor at the end of the last replace
@@ -289,7 +291,7 @@ namespace LacewingNote.Common
             int start = Text.IndexOf(find);
             if (start!= -1)
             {
-                cursor = start;
+                Cursor = start;
                 Text.Remove(start, find.Length);
                 Add(start, replace);
             }

@@ -12,11 +12,11 @@ namespace LacewingNote.Content.InfoDisplays
     {
         public override bool Active()
         {
-                return !string.IsNullOrEmpty(Main.LocalPlayer.GetModPlayer<NotePlayer>().InfoNote);
+                return !string.IsNullOrEmpty(Main.LocalPlayer.GetModPlayer<NotePlayer>().InfoNote.Text);
         }
         public override string DisplayValue()
         {
-            return Main.LocalPlayer.GetModPlayer<NotePlayer>().InfoNote;
+            return Main.LocalPlayer.GetModPlayer<NotePlayer>().InfoNote.Text;
         }
     }
 }
