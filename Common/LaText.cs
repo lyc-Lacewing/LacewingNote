@@ -10,11 +10,11 @@ namespace LacewingNote.Common
 {
     public struct LaText
     {
-        private string[] cache = new string[0];
-        private int cIndex = 0;
-        private int CIndex { get { return Math.Clamp(this.cIndex, 0, cache.Length - 1); } set { cIndex = Math.Clamp(value, 0, cache.Length - 1); } }
-        private int cursor = 0;
-        private int Cursor { get { return Math.Clamp(this.cursor, 0, Text.Length); } set { cursor = Math.Clamp(value, 0, Text.Length); } }
+        private string[] cache;
+        private int cIndex;
+        private int CIndex { get { return Math.Clamp(cIndex, 0, Math.Max(cache.Length - 1, 0)); } set { cIndex = Math.Clamp(value, 0, Math.Max(cache.Length - 1, 0)); } }
+        private int cursor;
+        private int Cursor { get { return Math.Clamp(cursor, 0, Text.Length); } set { cursor = Math.Clamp(value, 0, Text.Length); } }
 
         public string Text { get => cache[CIndex]; }
         public string[] Words { get => Text.Split(' '); }
@@ -22,11 +22,11 @@ namespace LacewingNote.Common
         public int CacheLength { get => cache.Length; }
 
         #region Construction
-        public LaText(string[] text = default, int cacheLength = 9)
+        public LaText(int cacheLength = 9)
         {
-            this.cache = new string[cacheLength];
-            this.CIndex = 0;
-            this.Cursor = 0;
+            cache = new string[cacheLength];
+            CIndex = 0;
+            Cursor = 0;
         }
         #endregion
 
