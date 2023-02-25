@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using ReLogic.OS;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,7 +13,6 @@ namespace LacewingNote.Common
         private string[] cache;
         private int cIndex { get { return Math.Clamp(cIndex, 0, cache.Length - 1); } set { value = Math.Clamp(value, 0, cache.Length - 1); } }
         private int cursor { get { return Math.Clamp(cursor, 0, Text.Length); } set { value = Math.Clamp(value, 0, Text.Length); } }
-        private List<Point> selection;
 
         public string Text { get => cache[cIndex]; }
         public string[] Words { get => Text.Split(' '); }
@@ -25,7 +25,6 @@ namespace LacewingNote.Common
             this.cache = new string[cacheLength];
             this.cIndex = 0;
             this.cursor = 0;
-            this.selection = new List<Point>();
         }
         #endregion
 
@@ -74,9 +73,13 @@ namespace LacewingNote.Common
         #endregion
 
         #region Cursor location & movement
+        /// <summary>
+        /// Index of the char after cursor
+        /// </summary>
+        /// <returns></returns>
         private int CursorCharIndex()
         {
-            return Math.Max(cursor - 1, 0);
+            return Math.Min(cursor, Text.Length - 1);
         }
         /// <summary>
         /// Length of num of words for cursor
@@ -126,13 +129,13 @@ namespace LacewingNote.Common
         /// <summary>
         /// Length of num lines for cursor
         /// </summary>
-        /// <param name="num"></param>
+        /// <param name="count"></param>
         /// <returns></returns>
-        private int LineLength(int num)
+        private int LineLength(int count)
         {
-            num = Math.Clamp(num, 0, Lines.Length);
+            count = Math.Clamp(count, 0, Lines.Length);
             int length = 0;
-            for (int i = 0; i < num; i++)
+            for (int i = 0; i < count; i++)
             {
                 length += Lines[i].Length + 1;
             }
@@ -170,36 +173,6 @@ namespace LacewingNote.Common
         }
         #endregion
 
-        #region Selection
-        private void SelectChar(int start, int end)
-        {
-            Point range = new Point();
-            cursor = start;
-            range.X = CursorCharIndex();
-            cursor = end;
-            range.Y = CursorCharIndex();
-            selection.Add(range);
-        }
-        private void SelectWord(int start, int end)
-        {
-            Point range = new Point();
-            CursorToPreWord(start);
-            range.X = cursor;
-            CursorToApWord(end);
-            range.Y = CursorCharIndex();
-            selection.Add(range);
-        }
-        private void SelectLine(int start, int end)
-        {
-            Point range = new Point();
-            CursorToPreLine(start);
-            range.X = cursor;
-            CursorToApLine(end);
-            range.Y = CursorCharIndex();
-            selection.Add(range);
-        }
-        #endregion
-
         #region Text editing
         /// <summary>
         /// Override text by newText, cached
@@ -211,7 +184,6 @@ namespace LacewingNote.Common
             cache[0] = newText;
             cIndex = 0;
             cursor = Text.Length;
-            selection = new List<Point>();
         }
         /// <summary>
         /// Increase cIndex by step
@@ -241,18 +213,23 @@ namespace LacewingNote.Common
         /// <summary>
         /// Insert text at index, cached
         /// </summary>
-        /// <param name="index"></param>
+        /// <param name="start"></param>
         /// <param name="text"></param>
-        public void Add(int index, string text)
+        public void Add(int start, string text)
         {
-            Renew(Text.Insert(index, text));
-            cursor += text.Length;
+            Renew(Text.Insert(start, text));
+            cursor = start + text.Length;
+        }
+        public void Remove(int start, int count)
+        {
+            Renew(Text.Remove(start, count));
+            cursor = start;
         }
         /// <summary>
         /// Prepend text at the current word
         /// </summary>
         /// <param name="text"></param>
-        public void Insert(string text)
+        public void InsertWord(string text)
         {
             CursorToPreWord(CursorAtWord());
             Add(cursor, text);
@@ -266,7 +243,123 @@ namespace LacewingNote.Common
             CursorToPreLine(CursorAtLine());
             Add(cursor, text);
         }
-
+        /// <summary>
+        /// Append text at the current word
+        /// </summary>
+        /// <param name="text"></param>
+        public void AppendWord(string text)
+        {
+            CursorToApWord(CursorAtWord());
+            Add(cursor, text);
+        }
+        /// <summary>
+        /// Append text at the current line
+        /// </summary>
+        /// <param name="text"></param>
+        public void AppendLine(string text)
+        {
+            CursorToApLine(CursorAtLine());
+            Add(cursor, text);
+        }
+        /// <summary>
+        /// Start a new line below the current line with text given
+        /// </summary>
+        /// <param name="text"></param>
+        public void NewLineBelow(string text)
+        {
+            CursorToApLine();
+            Add(cursor, string.Join("", '\n', text));
+        }
+        /// <summary>
+        /// Start a new line above the current line with text given
+        /// </summary>
+        /// <param name="text"></param>
+        public void NewLineAbove(string text)
+        {
+            CursorToPreLine();
+            Add(cursor, string.Join("", text, '\n'));
+        }
+        /// <summary>
+        /// Replace the first occurence of find with replace and put cursor at the end of the last replace
+        /// </summary>
+        /// <param name="find"></param>
+        /// <param name="replace"></param>
+        public void ReplaceNext(string find, string replace)
+        {
+            int start = Text.IndexOf(find);
+            if (start!= -1)
+            {
+                cursor = start;
+                Text.Remove(start, find.Length);
+                Add(start, replace);
+            }
+        }
+        /// <summary>
+        /// Replace all occurence of find with replace and put cursor at the end of the last replace
+        /// </summary>
+        /// <param name="find"></param>
+        /// <param name="replace"></param>
+        public void ReplaceAll(string find, string replace)
+        {
+            while (find != replace && Text.IndexOf(find) != -1)
+            {
+                ReplaceNext(find, replace);
+            }
+        }
+        /// <summary>
+        /// Delete the {num}th word
+        /// </summary>
+        /// <param name="num"></param>
+        public void DeleteWord(int num)
+        {
+            CursorToPreWord(num);
+            int start = CursorCharIndex();
+            CursorToApWord(num);
+            int end = CursorCharIndex();
+            Remove(start, end - start + 1);
+        }
+        /// <summary>
+        /// Delete the {num}th line
+        /// </summary>
+        /// <param name="num"></param>
+        public void DeleteLine(int num)
+        {
+            CursorToPreLine(num);
+            int start = CursorCharIndex();
+            CursorToApLine(num);
+            int end = CursorCharIndex();
+            Remove(start, end - start + 1);
+        }
+        /// <summary>
+        /// Clear Text
+        /// </summary>
+        public void Clear()
+        {
+            Remove(0, Text.Length);
+        }
+        /// <summary>
+        /// Clear Text and cache
+        /// </summary>
+        public void ClearAll()
+        {
+            Remove(0, Text.Length);
+            MoveCache(cache.Length);
+        }
+        /// <summary>
+        /// Copy Text to clipboard
+        /// </summary>
+        public void Copy()
+        {
+            Platform.Get<IClipboard>().Value = Text;
+        }
+        /// <summary>
+        /// Copy Text to clipboard then Clear
+        /// </summary>
+        public void Cut()
+        {
+            Copy();
+            Clear();
+        }
         #endregion
 
         #region Command
@@ -275,24 +368,26 @@ namespace LacewingNote.Common
             public const char Escaper = '\\';
             public const char Trigger = '.';
 
-            public const string SelectWord = "s";
-            public const string SelectLine = "S";
-            public const string Insert = "i";
+            public const string ToWord = "t";
+            public const string ToLine = "T";
+
+            public const string InsertWord = "i";
             public const string InsertLine = "I";
-            public const string Append = "a";
+            public const string AppendWord = "a";
             public const string AppendLine = "A";
             public const string NewLineBelow = "o";
             public const string NewLineAbove = "O";
-            public const string InsertAtWord = "e";
-            public const string AppendAtWord = "E";
-            public const string InsertAtLine = "l";
-            public const string AppendAtLine = "L";
             public const string Undo = "z";
             public const string Redo = "Z";
             public const string ReplaceNext = "r";
             public const string ReplaceAll = "R";
+            public const string DeleteWord = "d";
+            public const string DeleteLine = "D";
             public const string Clear = "c";
             public const string ClearAll = "C";
+
+            public const string Copy = "cc";
+            public const string Cut = "cx";
         }
         /// <summary>
         /// Is the text considered as a command
@@ -340,6 +435,10 @@ namespace LacewingNote.Common
                 }
             }
             return result;
+        }
+        private void ReadCommand(string[] args)
+        {
+
         }
         #endregion
     }
