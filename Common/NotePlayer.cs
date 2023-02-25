@@ -8,6 +8,6 @@ namespace LacewingNote.Common
 {
     public class NotePlayer : ModPlayer
     {
-        public LaText InfoNote = new LaText(9);
+        public LaText InfoNote = new LaText();
     }
 }

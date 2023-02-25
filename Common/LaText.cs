@@ -2,26 +2,35 @@
 using ReLogic.OS;
 using System;
 using System.Collections.Generic;
+using System.Data.SqlTypes;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace LacewingNote.Common
 {
-    public struct LaText
+    public struct LaText : INullable
     {
+        public bool IsNull => cache == null;
+
         private string[] cache;
         private int cIndex;
         private int CIndex { get { return Math.Clamp(cIndex, 0, Math.Max(cache.Length - 1, 0)); } set { cIndex = Math.Clamp(value, 0, Math.Max(cache.Length - 1, 0)); } }
         private int cursor;
         private int Cursor { get { return Math.Clamp(cursor, 0, Text.Length); } set { cursor = Math.Clamp(value, 0, Text.Length); } }
 
-        public string Text { get => cache[CIndex]; }
+        public string Text { get => cache[CIndex] == null ? string.Empty : cache[CIndex]; }
         public string[] Words { get => Text.Split(' '); }
         public string[] Lines { get => Text.Split('\n'); }
         public int CacheLength { get => cache.Length; }
 
         #region Construction
+        public LaText()
+        {
+            cache = new string[9];
+            Cursor = 0;
+            Cursor = 0;
+        }
         public LaText(int cacheLength = 9)
         {
             cache = new string[cacheLength];
@@ -81,7 +90,7 @@ namespace LacewingNote.Common
         /// <returns></returns>
         private int CursorCharIndex()
         {
-            return Math.Min(Cursor, Text.Length - 1);
+            return Math.Min(Cursor, Math.Max(Text.Length - 1, 0));
         }
         /// <summary>
         /// Length of num of words for cursor
