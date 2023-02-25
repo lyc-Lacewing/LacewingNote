@@ -28,7 +28,7 @@ namespace LacewingNote.Common
         public LaText()
         {
             cache = new string[9];
-            Cursor = 0;
+            CIndex = 0;
             Cursor = 0;
         }
         public LaText(int cacheLength = 9)
@@ -447,9 +447,36 @@ namespace LacewingNote.Common
             }
             return result;
         }
-        private void ReadCommand(string[] args)
+        /// <summary>
+        /// Parse a literal LaText Args element to displayed text
+        /// </summary>
+        /// <param name="literal"></param>
+        /// <returns></returns>
+        private static string ParseLiteral(string literal)
         {
+            return literal.Replace("\\.", ".");
+        }
 
+        public void RunCommand(string[] args)
+        {
+            string[] largs = ParseArgs(args);
+            for (int i = 0; i < largs.Length; i++)
+            {
+                string la = largs[i];
+                if (i == 0 && !IsCommand(la))
+                {
+                    Renew(la);
+                    continue;
+                }
+                if (IsCommand(la))
+                {
+                    if (i + 1 > largs.Length)
+                    {
+                        break;
+                    }
+
+                }
+            }
         }
         #endregion
     }
