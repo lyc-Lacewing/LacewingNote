@@ -18,7 +18,9 @@ namespace LacewingNote.Content.Commands
             if (args.Length > 0)
             {
                 caller.Player.GetModPlayer<NotePlayer>().InfoNote.RunCommand(args);
-                caller.Player.GetModPlayer<NotePlayer>().InfoNote.ReplaceAll(args[0], args[1]);
+                //caller.Player.GetModPlayer<NotePlayer>().InfoNote.Renew("Test this");
+                caller.Player.GetModPlayer<NotePlayer>().InfoNote.InsertWord(args[0]);
+                //caller.Player.GetModPlayer<NotePlayer>().InfoNote.Renew(string.Join(" ", LaText.ParseArgs(args)));
             }
         }
     }

@@ -114,9 +114,9 @@ namespace LacewingNote.Common
         {
             for (int i = 0; i < Words.Length; i++)
             {
-                if (WordsLength(i) >= Cursor)
+                if (WordsLength(i + 1) >= Cursor)
                 {
-                    return i;
+                    return i + 1;
                 }
             }
             return 0;
@@ -136,6 +136,10 @@ namespace LacewingNote.Common
         private void CursorToApWord(int num = 1)
         {
             Cursor = WordsLength(num);
+            if (Text[CursorCharIndex()] == ' ')
+            {
+                Cursor -= 1;
+            }
         }
         /// <summary>
         /// Length of num lines for cursor
@@ -159,9 +163,9 @@ namespace LacewingNote.Common
         {
             for (int i = 0; i < Lines.Length; i++)
             {
-                if (LineLength(i) >= Cursor)
+                if (LineLength(i + 1) >= Cursor)
                 {
-                    return i;
+                    return i + 1;
                 }
             }
             return 0;
@@ -181,6 +185,10 @@ namespace LacewingNote.Common
         private void CursorToApLine(int num = 1)
         {
             Cursor = LineLength(num);
+            if (Text[CursorCharIndex()] == '\n')
+            {
+                Cursor -= 1;
+            }
         }
         #endregion
 
@@ -445,7 +453,7 @@ namespace LacewingNote.Common
         /// </summary>
         /// <param name="args"></param>
         /// <returns></returns>
-        private static string[] ParseArgs(string[] args)
+        public static string[] ParseArgs(string[] args)
         {
             if (args.Length <= 0)
             {
@@ -485,7 +493,7 @@ namespace LacewingNote.Common
         /// <returns></returns>
         private static string ParseLiteral(string literal)
         {
-            return literal.Replace("\\.", ".");
+            return literal.Replace("\\.", ".").Replace("\\_", "_").Replace("_", " ");
         }
         /// <summary>
         /// Parse op with its numeric params for cursor movement
@@ -494,7 +502,7 @@ namespace LacewingNote.Common
         /// <param name="moveTo">Cursor should move to</param>
         /// <param name="moveBy">Cursor should move by</param>
         /// <returns></returns>
-        private static int[] ParseNumOp(string op, out bool moveTo, out bool moveBy)
+        public static int[] ParseNumOp(string op, out bool moveTo, out bool moveBy)
         {
             int dir = 1;
             int[] nums = new int[0];
