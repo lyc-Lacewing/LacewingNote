@@ -24,7 +24,8 @@ namespace LacewingNote.Content.Commands
                 //caller.Player.GetModPlayer<NotePlayer>().InfoNote.InsertWord(args[0]);
                 //caller.Player.GetModPlayer<NotePlayer>().InfoNote.DoAppendWord(args);
             }
-            Main.NewText(caller.Player.GetModPlayer<NotePlayer>().InfoNote.TextWithCursor());
+            Main.NewText("Parsed args: " + string.Join(" ", LaText.ParseArgs(args)));
+            Main.NewText("Editing: " + caller.Player.GetModPlayer<NotePlayer>().InfoNote.TextWithCursor());
         }
     }
 }

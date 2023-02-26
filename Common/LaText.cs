@@ -469,7 +469,7 @@ namespace LacewingNote.Common
                 return default;
             }
             string[] result = new string[0];
-            string arg = string.Empty, op = string.Empty, literal = string.Empty;
+            string arg = string.Empty, literal = string.Empty;
             for (int i = 0; i < args.Length; i++)
             {
                 arg = args[i];
@@ -649,12 +649,13 @@ namespace LacewingNote.Common
             while (largs.Count > 0)
             {
                 string la = largs[0];
-                if (!IsCommand(la))
+                if (!IsCommand(la)) // If isn't a command, Renew() it then continue
                 {
                     Renew(la);
                     largs.RemoveAt(0);
                     continue;
                 }
+                // If it's a command: 
                 string[] cmdPair = new string[2];
                 bool withLiteral = largs.Count > 1 && !IsCommand(largs[1]);
                 if (withLiteral)
