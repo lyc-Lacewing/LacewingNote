@@ -194,7 +194,7 @@ namespace LacewingNote.Common
 
         #region Text editing
         /// <summary>
-        /// Override text by newText, cached
+        /// Override text by newText, literal parsed, cached
         /// </summary>
         /// <param name="newText"></param>
         public void Renew(string newText)
@@ -649,7 +649,7 @@ namespace LacewingNote.Common
                 }
                 if (!IsCommand(la))
                 {
-                    Renew(ParseLiteral(la));
+                    Renew(la);
                     largs.RemoveAt(0);
                     continue;
                 }
