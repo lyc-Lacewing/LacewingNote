@@ -136,7 +136,7 @@ namespace LacewingNote.Common
         private void CursorToApWord(int num = 1)
         {
             Cursor = WordsLength(num);
-            if (Text[CursorCharIndex()] == ' ')
+            if (!string.IsNullOrEmpty(Text) && Cursor != 0 && Text[CursorCharIndex() - 1] == ' ')
             {
                 Cursor -= 1;
             }
@@ -185,10 +185,19 @@ namespace LacewingNote.Common
         private void CursorToApLine(int num = 1)
         {
             Cursor = LineLength(num);
-            if (Text[CursorCharIndex()] == '\n')
+            if (Cursor != Text.Length && Cursor != 0 && Text[CursorCharIndex() - 1] == '\n')
             {
                 Cursor -= 1;
             }
+        }
+
+        /// <summary>
+        /// Indicate the location of cursor
+        /// </summary>
+        /// <returns></returns>
+        public string TextWithCursor()
+        {
+            return Text.Insert(Cursor, "|");
         }
         #endregion
 
@@ -479,9 +488,9 @@ namespace LacewingNote.Common
                 }
                 if (!literal[i] || i == literal.Length - 1)
                 {
-                    result.Append(literals);
+                    result = result.Append(literals).ToArray();
                     literals = string.Empty;
-                    result.Append(arg);
+                    result = result.Append(arg).ToArray();
                 }
             }
             return result;
@@ -493,7 +502,9 @@ namespace LacewingNote.Common
         /// <returns></returns>
         private static string ParseLiteral(string literal)
         {
-            return literal.Replace("\\.", ".").Replace("\\_", "_").Replace("_", " ");
+            string real = literal.Replace("\\.", ".");
+            real = real.Replace('_', ' ');
+            return real;
         }
         /// <summary>
         /// Parse op with its numeric params for cursor movement
@@ -528,11 +539,11 @@ namespace LacewingNote.Common
                 }
                 if (int.TryParse(para, out int num))
                 {
-                    nums.Append(Math.Min(num, 0) * dir);
+                    nums = nums.Append(Math.Max(num, 0) * dir).ToArray();
                 }
                 else
                 {
-                    nums.Append(int.MaxValue);
+                    nums = nums.Append(int.MaxValue).ToArray();
                 }
 
             }
@@ -592,7 +603,7 @@ namespace LacewingNote.Common
         public void DoAppendWord(string[] args)
         {
             string[] largs = args.Take(2).ToArray();
-            int[] nums = ParseNumOp(largs[0], out bool to, out bool by);
+            int[] nums = ParseNumOp(args[0], out bool to, out bool by);
             int words = nums[0];
             if (words == int.MaxValue)
             {

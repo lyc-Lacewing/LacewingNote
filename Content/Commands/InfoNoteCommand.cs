@@ -17,11 +17,13 @@ namespace LacewingNote.Content.Commands
         {
             if (args.Length > 0)
             {
-                caller.Player.GetModPlayer<NotePlayer>().InfoNote.RunCommand(args);
-                //caller.Player.GetModPlayer<NotePlayer>().InfoNote.Renew("Test this");
-                caller.Player.GetModPlayer<NotePlayer>().InfoNote.InsertWord(args[0]);
+                //caller.Player.GetModPlayer<NotePlayer>().InfoNote.RunCommand(args);
+                //int i = LaText.ParseNumOp(args[0], out _, out _).Length;
+                //caller.Player.GetModPlayer<NotePlayer>().InfoNote.Renew(i.ToString());
+                caller.Player.GetModPlayer<NotePlayer>().InfoNote.AppendWord(args[0]);
                 //caller.Player.GetModPlayer<NotePlayer>().InfoNote.Renew(string.Join(" ", LaText.ParseArgs(args)));
             }
+            Main.NewText(caller.Player.GetModPlayer<NotePlayer>().InfoNote.TextWithCursor());
         }
     }
 }
