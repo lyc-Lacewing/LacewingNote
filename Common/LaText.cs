@@ -200,7 +200,7 @@ namespace LacewingNote.Common
         public void Renew(string newText)
         {
             MoveCache(-CIndex + 1);
-            cache[0] = newText;
+            cache[0] = ParseLiteral(newText);
             CIndex = 0;
             Cursor = Text.Length;
         }
@@ -560,7 +560,7 @@ namespace LacewingNote.Common
             {
                 CursorToPreWord(CursorAtWord() + words);
             }
-            InsertWord(ParseLiteral(largs[1]));
+            InsertWord(largs[1]);
         }
         /// <summary>
         /// Prepend text with args
@@ -583,7 +583,7 @@ namespace LacewingNote.Common
             {
                 CursorToPreLine(CursorAtLine() + lines);
             }
-            InsertLine(ParseLiteral(largs[1]));
+            InsertLine(largs[1]);
         }
         /// <summary>
         /// Append text with args
@@ -606,7 +606,7 @@ namespace LacewingNote.Common
             {
                 CursorToPreWord(CursorAtWord() + words);
             }
-            AppendWord(ParseLiteral(largs[1]));
+            AppendWord(largs[1]);
         }
         /// <summary>
         /// Append text with args
@@ -625,7 +625,7 @@ namespace LacewingNote.Common
             {
                 CursorToPreLine(CursorAtWord() + lines);
             }
-            AppendLine(ParseLiteral(largs[1]));
+            AppendLine(largs[1]);
         }
         /// <summary>
         /// Run commands in given args
