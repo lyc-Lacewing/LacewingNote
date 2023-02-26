@@ -464,33 +464,30 @@ namespace LacewingNote.Common
         /// <returns></returns>
         public static string[] ParseArgs(string[] args)
         {
-            if (args.Length <= 0)
+            if (args == null || args.Length < 1)
             {
                 return default;
             }
             string[] result = new string[0];
-            bool[] literal = new bool[args.Length];
-            string literals = string.Empty, arg = string.Empty;
+            string arg = string.Empty, op = string.Empty, literal = string.Empty;
             for (int i = 0; i < args.Length; i++)
             {
                 arg = args[i];
-                if (arg[0] != Ops.Trigger)
+                if (string.IsNullOrEmpty(arg))
                 {
-                    literal[i] = true;
+                    continue;
                 }
-            }
-            for (int i = 0; i < args.Length; i++)
-            {
-                arg = args[i];
-                if (literal[i])
+                if (arg[0] == Ops.Trigger)
                 {
-                    literals = string.Join(i == 0 ? "" : " ", literals, arg);
-                }
-                if (!literal[i] || i == literal.Length - 1)
-                {
-                    result = result.Append(literals).ToArray();
-                    literals = string.Empty;
+                    result = result.Append(literal).ToArray();
+                    literal = string.Empty;
                     result = result.Append(arg).ToArray();
+                    continue;
+                }
+                literal = string.Join(i == 0 ? "" : " ", literal, arg);
+                if (i == args.Length - 1)
+                {
+                    result = result.Append(literal).ToArray();
                 }
             }
             return result;
@@ -652,17 +649,17 @@ namespace LacewingNote.Common
             while (largs.Count > 0)
             {
                 string la = largs[0];
-                string[] cmdPair = new string[2];
-                bool withLiteral = largs.Count > 1 && !IsCommand(largs[1]);
-                if (withLiteral)
-                {
-                    cmdPair = largs.Take(2).ToArray();
-                }
                 if (!IsCommand(la))
                 {
                     Renew(la);
                     largs.RemoveAt(0);
                     continue;
+                }
+                string[] cmdPair = new string[2];
+                bool withLiteral = largs.Count > 1 && !IsCommand(largs[1]);
+                if (withLiteral)
+                {
+                    cmdPair = largs.Take(2).ToArray();
                 }
                 char detLa = la[1];
                 switch (detLa)
