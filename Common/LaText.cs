@@ -477,17 +477,18 @@ namespace LacewingNote.Common
                 {
                     continue;
                 }
-                if (arg[0] == Ops.Trigger)
+                if (arg[0] == Ops.Trigger) // If it's a command
                 {
-                    result = result.Append(literal).ToArray();
-                    literal = string.Empty;
-                    result = result.Append(arg).ToArray();
+                    result = result.Append(literal).ToArray(); // Append the previous literals
+                    literal = string.Empty; // Reset literal to empty
+                    result = result.Append(arg).ToArray(); // Then Append the command
                     continue;
                 }
-                literal = string.Join(i == 0 ? "" : " ", literal, arg);
-                if (i == args.Length - 1)
+                // If it's a literal
+                literal = string.Join(i == 0 ? "" : " ", literal, arg); // Add it to the current literal group
+                if (i == args.Length - 1 && !string.IsNullOrEmpty(literal)) // If it comes to the end of args and literal is not null or empty
                 {
-                    result = result.Append(literal).ToArray();
+                    result = result.Append(literal).ToArray(); // Then append it
                 }
             }
             return result;
@@ -500,7 +501,7 @@ namespace LacewingNote.Common
         private static string ParseLiteral(string literal)
         {
             string real = literal.Replace("\\.", ".");
-            real = real.Replace('_', ' '); //TODO Escape
+            real = real.Replace('_', ' '); //TODO Properly escape cases
             return real;
         }
         /// <summary>
