@@ -455,7 +455,7 @@ namespace LacewingNote.Common
         /// <returns></returns>
         private static bool IsCommand(string text)
         {
-            return (text.Length > 0 && text[0] == Ops.Trigger);
+            return (text.Length > 1 && text[0] == Ops.Trigger);
         }
         /// <summary>
         /// Parse given args to LaText Args form, continuous literals are merged into one element 

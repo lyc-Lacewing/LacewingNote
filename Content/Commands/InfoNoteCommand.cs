@@ -21,8 +21,8 @@ namespace LacewingNote.Content.Commands
                 //int i = LaText.ParseNumOp(args[0], out _, out _).Length;
                 //string s = string.Join(" ", LaText.ParseArgs(args));
                 //caller.Player.GetModPlayer<NotePlayer>().InfoNote.Renew(s);
-                //caller.Player.GetModPlayer<NotePlayer>().InfoNote.AppendWord(args[0]);
-                //caller.Player.GetModPlayer<NotePlayer>().InfoNote.Renew(string.Join(" ", LaText.ParseArgs(args)));
+                //caller.Player.GetModPlayer<NotePlayer>().InfoNote.InsertWord(args[0]);
+                //caller.Player.GetModPlayer<NotePlayer>().InfoNote.DoAppendWord(args);
             }
             Main.NewText(caller.Player.GetModPlayer<NotePlayer>().InfoNote.TextWithCursor());
         }
