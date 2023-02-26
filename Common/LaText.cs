@@ -425,8 +425,8 @@ namespace LacewingNote.Common
 
             public const char ToWord = 't';
             public const char ToLine = 'T';
-            public const char Next = 'm';
-            public const char Previous = 'M';
+            public const char MoveBy = 'm';
+            public const char MoveSuc = 'M';
 
             public const char InsertChar = 'h';
             public const char DeleteChar = 'H';
@@ -503,7 +503,7 @@ namespace LacewingNote.Common
         private static string ParseLiteral(string literal)
         {
             string real = literal.Replace("\\.", ".");
-            real = real.Replace('_', ' ');
+            real = real.Replace('_', ' '); //TODO Escape
             return real;
         }
         /// <summary>
@@ -513,7 +513,7 @@ namespace LacewingNote.Common
         /// <param name="moveTo">Cursor should move to</param>
         /// <param name="moveBy">Cursor should move by</param>
         /// <returns></returns>
-        public static int[] ParseNumOp(string op, out bool moveTo, out bool moveBy)
+        public static int[] GetNumParam(string op, out bool moveTo, out bool moveBy)
         {
             int dir = 1;
             int[] nums = new int[0];
@@ -557,7 +557,7 @@ namespace LacewingNote.Common
         public void DoInsertWord(string[] args)
         {
             string[] largs = args.Take(2).ToArray();
-            int[] nums = ParseNumOp(largs[0], out bool to, out bool by);
+            int[] nums = GetNumParam(largs[0], out bool to, out bool by);
             int words = nums[0];
             if (words == int.MaxValue)
             {
@@ -580,7 +580,7 @@ namespace LacewingNote.Common
         public void DoInsertLine(string[] args)
         {
             string[] largs = args.Take(2).ToArray(); 
-            int[] nums = ParseNumOp(largs[0], out bool to, out bool by);
+            int[] nums = GetNumParam(largs[0], out bool to, out bool by);
             int lines = nums[0];
             if (lines == int.MaxValue)
             {
@@ -603,7 +603,7 @@ namespace LacewingNote.Common
         public void DoAppendWord(string[] args)
         {
             string[] largs = args.Take(2).ToArray();
-            int[] nums = ParseNumOp(args[0], out bool to, out bool by);
+            int[] nums = GetNumParam(args[0], out bool to, out bool by);
             int words = nums[0];
             if (words == int.MaxValue)
             {
@@ -626,7 +626,7 @@ namespace LacewingNote.Common
         public void DoAppendLine(string[] args)
         {
             string[] largs = args.Take(2).ToArray();
-            int[] nums = ParseNumOp(largs[0], out bool to, out bool by);
+            int[] nums = GetNumParam(largs[0], out bool to, out bool by);
             int lines = nums[0];
             if (to)
             {
@@ -652,11 +652,11 @@ namespace LacewingNote.Common
             while (largs.Count > 0)
             {
                 string la = largs[0];
-                string[] thisArgs = new string[2];
+                string[] cmdPair = new string[2];
                 bool withLiteral = largs.Count > 1 && !IsCommand(largs[1]);
                 if (withLiteral)
                 {
-                    thisArgs = largs.Take(2).ToArray();
+                    cmdPair = largs.Take(2).ToArray();
                 }
                 if (!IsCommand(la))
                 {
@@ -673,7 +673,7 @@ namespace LacewingNote.Common
                     case Ops.InsertWord:
                         if (withLiteral)
                         {
-                            DoInsertWord(thisArgs);
+                            DoInsertWord(cmdPair);
                             largs.RemoveRange(0, 2);
                             break;
                         }
@@ -682,7 +682,7 @@ namespace LacewingNote.Common
                     case Ops.InsertLine:
                         if (withLiteral)
                         {
-                            DoInsertLine(thisArgs);
+                            DoInsertLine(cmdPair);
                             largs.RemoveRange(0, 2);
                             break;
                         }
@@ -691,7 +691,7 @@ namespace LacewingNote.Common
                     case Ops.AppendWord:
                         if (!withLiteral)
                         {
-                            DoAppendWord(thisArgs);
+                            DoAppendWord(cmdPair);
                             largs.RemoveRange(0, 2);
                             break;
                         }
@@ -700,7 +700,7 @@ namespace LacewingNote.Common
                     case Ops.AppendLine:
                         if (withLiteral)
                         {
-                            DoAppendLine(thisArgs);
+                            DoAppendLine(cmdPair);
                             largs.RemoveRange(0, 2);
                             break;
                         }
