@@ -237,6 +237,24 @@ namespace LacewingNote.Common
             Cursor = start;
         }
         /// <summary>
+        /// Prepend text at the current char
+        /// </summary>
+        /// <param name="text"></param>
+        public void InsertChar(string text)
+        {
+            Cursor = CursorCharIndex();
+            Add(Cursor, text);
+        }
+        /// <summary>
+        /// Append text at the current char
+        /// </summary>
+        /// <param name="text"></param>
+        public void AppendChar(string text)
+        {
+            Cursor = CursorCharIndex() + 1;
+            Add(Cursor, text);
+        }
+        /// <summary>
         /// Prepend text at the current word
         /// </summary>
         /// <param name="text"></param>
@@ -301,7 +319,7 @@ namespace LacewingNote.Common
             if (start!= -1)
             {
                 Cursor = start;
-                Text.Remove(start, find.Length);
+                Remove(start, find.Length);
                 Add(start, replace);
             }
         }
@@ -316,6 +334,15 @@ namespace LacewingNote.Common
             {
                 ReplaceNext(find, replace);
             }
+        }
+        /// <summary>
+        /// Delete the {num}th char
+        /// </summary>
+        /// <param name="num"></param>
+        public void DeleteChar(int num)
+        {
+            Cursor = num - 1;
+            Remove(CursorCharIndex(), 1);
         }
         /// <summary>
         /// Delete the {num}th word
@@ -381,7 +408,11 @@ namespace LacewingNote.Common
 
             public const char ToWord = 't';
             public const char ToLine = 'T';
+            public const char Next = 'm';
+            public const char Previous = 'M';
 
+            public const char InsertChar = 'h';
+            public const char DeleteChar = 'H';
             public const char InsertWord = 'i';
             public const char InsertLine = 'I';
             public const char AppendWord = 'a';
@@ -466,11 +497,11 @@ namespace LacewingNote.Common
         private static int[] ParseNumOp(string op, out bool moveTo, out bool moveBy)
         {
             int dir = 1;
-            int[] nums = new int[] { };
+            int[] nums = new int[0];
             moveTo = false; moveBy = false;
             if (op.Length < 3)
             {
-                return nums;
+                return new int[] { int.MaxValue };
             }
             string[] paras = op.Substring(2).Split(',');
             for (int i = 0; i < paras.Length; i++)
@@ -489,7 +520,11 @@ namespace LacewingNote.Common
                 }
                 if (int.TryParse(para, out int num))
                 {
-                    nums.Append(num * dir);
+                    nums.Append(Math.Min(num, 0) * dir);
+                }
+                else
+                {
+                    nums.Append(int.MaxValue);
                 }
 
             }
@@ -503,14 +538,19 @@ namespace LacewingNote.Common
         public void DoInsertWord(string[] args)
         {
             string[] largs = args.Take(2).ToArray();
-            int num = ParseNumOp(largs[0], out bool to, out bool by);
+            int[] nums = ParseNumOp(largs[0], out bool to, out bool by);
+            int words = nums[0];
+            if (words == int.MaxValue)
+            {
+                words = CursorAtWord();
+            }
             if (to)
             {
-                CursorToPreWord(num);
+                CursorToPreWord(words);
             }
             else if (by)
             {
-                CursorToPreWord(CursorAtWord() + num);
+                CursorToPreWord(CursorAtWord() + words);
             }
             InsertWord(ParseLiteral(largs[1]));
         }
@@ -520,15 +560,20 @@ namespace LacewingNote.Common
         /// <param name="args"></param>
         public void DoInsertLine(string[] args)
         {
-            string[] largs = args.Take(2).ToArray();
-            int num = ParseNumOp(largs[0], out bool to, out bool by);
+            string[] largs = args.Take(2).ToArray(); 
+            int[] nums = ParseNumOp(largs[0], out bool to, out bool by);
+            int lines = nums[0];
+            if (lines == int.MaxValue)
+            {
+                lines = CursorAtLine();
+            }
             if (to)
             {
-                CursorToPreLine(num);
+                CursorToPreLine(lines);
             }
             else if (by)
             {
-                CursorToPreLine(CursorAtLine() + num);
+                CursorToPreLine(CursorAtLine() + lines);
             }
             InsertLine(ParseLiteral(largs[1]));
         }
@@ -539,14 +584,19 @@ namespace LacewingNote.Common
         public void DoAppendWord(string[] args)
         {
             string[] largs = args.Take(2).ToArray();
-            int num = ParseNumOp(largs[0], out bool to, out bool by);
+            int[] nums = ParseNumOp(largs[0], out bool to, out bool by);
+            int words = nums[0];
+            if (words == int.MaxValue)
+            {
+                words = CursorAtWord();
+            }
             if (to)
             {
-                CursorToApWord(num);
+                CursorToPreWord(words);
             }
             else if (by)
             {
-                CursorToApWord(CursorAtWord() + num);
+                CursorToPreWord(CursorAtWord() + words);
             }
             AppendWord(ParseLiteral(largs[1]));
         }
@@ -557,16 +607,17 @@ namespace LacewingNote.Common
         public void DoAppendLine(string[] args)
         {
             string[] largs = args.Take(2).ToArray();
-            int num = ParseNumOp(largs[0], out bool to, out bool by);
+            int[] nums = ParseNumOp(largs[0], out bool to, out bool by);
+            int lines = nums[0];
             if (to)
             {
-                CursorToApLine(num);
+                CursorToPreLine(lines);
             }
             else if (by)
             {
-                CursorToApLine(CursorAtWord() + num);
+                CursorToPreLine(CursorAtWord() + lines);
             }
-            InsertLine(ParseLiteral(largs[1]));
+            AppendLine(ParseLiteral(largs[1]));
         }
         /// <summary>
         /// Run commands in given args
@@ -574,6 +625,10 @@ namespace LacewingNote.Common
         /// <param name="args"></param>
         public void RunCommand(string[] args)
         {
+            if (args == null || args.Length == 0)
+            {
+                return;
+            }
             List<string> largs = ParseArgs(args).ToList();
             while (largs.Count > 0)
             {
