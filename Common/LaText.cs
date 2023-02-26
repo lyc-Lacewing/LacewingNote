@@ -463,32 +463,38 @@ namespace LacewingNote.Common
         /// <param name="moveTo">Cursor should move to</param>
         /// <param name="moveBy">Cursor should move by</param>
         /// <returns></returns>
-        private static int ParseNumOp(string op, out bool moveTo, out bool moveBy)
+        private static int[] ParseNumOp(string op, out bool moveTo, out bool moveBy)
         {
-            int dir = 1, num = 0;
+            int dir = 1;
+            int[] nums = new int[] { };
             moveTo = false; moveBy = false;
             if (op.Length < 3)
             {
-                return 0;
+                return nums;
             }
-            string para = op.Substring(2);
-            if (para[0] == '+')
+            string[] paras = op.Substring(2).Split(',');
+            for (int i = 0; i < paras.Length; i++)
             {
-                moveBy = true;
-                para = para.Substring(1);
+                string para = paras[i];
+                if (para[0] == '+')
+                {
+                    moveBy = true;
+                    para = para.Substring(1);
+                }
+                else if (para[0] == '-')
+                {
+                    moveBy = true;
+                    dir = -1;
+                    para = para.Substring(1);
+                }
+                if (int.TryParse(para, out int num))
+                {
+                    nums.Append(num * dir);
+                }
+
             }
-            else if (para[0] == '-')
-            {
-                moveBy = true;
-                dir = -1;
-                para = para.Substring(1);
-            }
-            if (!int.TryParse(para, out num))
-            {
-                return 0;
-            }
-            moveTo = !moveBy;
-            return num * dir;
+            moveTo = !moveBy && nums.Length > 0;
+            return nums;
         }
         /// <summary>
         /// Prepend text with args
