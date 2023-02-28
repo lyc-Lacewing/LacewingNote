@@ -650,7 +650,7 @@ namespace LacewingNote.Common
             while (largs.Count > 0)
             {
                 string la = largs[0];
-                if (!IsCommand(la)) // If isn't a command, Renew() it then continue
+                if (!IsCommand(la)) // If isn't a command, Renew() it then continue (the default operation is Renew)
                 {
                     Renew(la);
                     largs.RemoveAt(0);
