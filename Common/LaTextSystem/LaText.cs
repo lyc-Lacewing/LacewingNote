@@ -4,36 +4,56 @@ using System;
 using System.Collections.Generic;
 using System.Data.SqlTypes;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LacewingNote.Common
+namespace LacewingNote.Common.LaTextSystem
 {
     public struct LaText : INullable
     {
-        public bool IsNull => cache == null;
+        public bool IsNull => textCache == null;
 
-        private string[] cache;
+        private static Dictionary<string, LaTextOp> ops = new Dictionary<string, LaTextOp>();
+
+        private string[] textCache;
         private int cIndex;
-        private int CIndex { get { return Math.Clamp(cIndex, 0, Math.Max(cache.Length - 1, 0)); } set { cIndex = Math.Clamp(value, 0, Math.Max(cache.Length - 1, 0)); } }
+        public int CIndex { get { return Math.Clamp(cIndex, 0, Math.Max(textCache.Length - 1, 0)); } set { cIndex = Math.Clamp(value, 0, Math.Max(textCache.Length - 1, 0)); } }
         private int cursor;
-        private int Cursor { get { return Math.Clamp(cursor, 0, Text.Length); } set { cursor = Math.Clamp(value, 0, Text.Length); } }
+        public int Cursor { get { return Math.Clamp(cursor, 0, Text.Length); } set { cursor = Math.Clamp(value, 0, Text.Length); } }
 
-        public string Text { get => cache[CIndex] == null ? string.Empty : cache[CIndex]; }
+        public string Text { get => textCache[CIndex] == null ? string.Empty : textCache[CIndex]; }
         public string[] Words { get => Text.Split(' '); }
-        public string[] Lines { get => Text.Split('\n'); }
-        public int CacheLength { get => cache.Length; }
+        public string[] Lines { get => Text.Split("\n"); }
+        public int CacheLength { get => textCache.Length; }
+
+        #region Initialize
+        /// <summary>
+        /// Run this function to setup LaText operations
+        /// </summary>
+        public void Init()
+        {
+            Array.ForEach(Array.FindAll(Assembly.GetExecutingAssembly().GetTypes(),
+                 type => !type.IsAbstract && type.IsSubclassOf(typeof(LaTextOp))),
+                 x =>
+                 {
+                     var op = (LaTextOp)Activator.CreateInstance(x);
+                     ops.Add(op.Trigger, op);
+                 });
+            inited = true;
+        }
+        #endregion
 
         #region Construction
         public LaText()
         {
-            cache = new string[9];
+            textCache = new string[9];
             CIndex = 0;
             Cursor = 0;
         }
         public LaText(int cacheLength = 9)
         {
-            cache = new string[cacheLength];
+            textCache = new string[cacheLength];
             CIndex = 0;
             Cursor = 0;
         }
@@ -46,38 +66,38 @@ namespace LacewingNote.Common
         /// <param name="step">Can be negative</param>
         private void MoveCache(int step = 1)
         {
-            if (cache.Length <= 0 || step == 0)
+            if (textCache.Length <= 0 || step == 0)
             {
                 return;
             }
-            if (Math.Abs(step) >= cache.Length)
+            if (Math.Abs(step) >= textCache.Length)
             {
-                for (int i = 0; i < cache.Length; i++)
+                for (int i = 0; i < textCache.Length; i++)
                 {
-                    cache[i] = default;
+                    textCache[i] = default;
                 }
                 return;
             }
             if (step < 0)
             {
-                for (int i = 0; i < cache.Length + step; i++)
+                for (int i = 0; i < textCache.Length + step; i++)
                 {
-                    cache[i] = cache[i - step];
+                    textCache[i] = textCache[i - step];
                 }
                 for (int i = -1; i >= step; i--)
                 {
-                    cache[cache.Length + i] = default;
+                    textCache[textCache.Length + i] = default;
                 }
             }
             else
             {
-                for (int i = cache.Length - 1; i > step - 1; i--)
+                for (int i = textCache.Length - 1; i > step - 1; i--)
                 {
-                    cache[i] = cache[i - step];
+                    textCache[i] = textCache[i - step];
                 }
                 for (int i = 0; i < step - 1; i++)
                 {
-                    cache[i] = default;
+                    textCache[i] = default;
                 }
             }
         }
@@ -209,7 +229,7 @@ namespace LacewingNote.Common
         public void Renew(string newText)
         {
             MoveCache(-CIndex + 1);
-            cache[0] = ParseLiteral(newText);
+            textCache[0] = ParseLiteral(newText);
             CIndex = 0;
             Cursor = Text.Length;
         }
@@ -219,7 +239,7 @@ namespace LacewingNote.Common
         /// <param name="step"></param>
         public void Undo(int step = 1)
         {
-            if (cache.Length <= 0 || step < 1 || CIndex + step > cache.Length - 1)
+            if (textCache.Length <= 0 || step < 1 || CIndex + step > textCache.Length - 1)
             {
                 return;
             }
@@ -231,7 +251,7 @@ namespace LacewingNote.Common
         /// <param name="step"></param>
         public void Redo(int step = 1)
         {
-            if (cache.Length <= 0 || step < 1 || CIndex - step < 0)
+            if (textCache.Length <= 0 || step < 1 || CIndex - step < 0)
             {
                 return;
             }
@@ -333,7 +353,7 @@ namespace LacewingNote.Common
         public void ReplaceNext(string find, string replace)
         {
             int start = Text.IndexOf(find);
-            if (start!= -1)
+            if (start != -1)
             {
                 Cursor = start;
                 Remove(start, find.Length);
@@ -398,7 +418,7 @@ namespace LacewingNote.Common
         public void ClearAll()
         {
             Remove(0, Text.Length);
-            MoveCache(cache.Length);
+            MoveCache(textCache.Length);
         }
         /// <summary>
         /// Copy Text to clipboard
@@ -455,7 +475,7 @@ namespace LacewingNote.Common
         /// <returns></returns>
         private static bool IsCommand(string text)
         {
-            return (text.Length > 1 && text[0] == Ops.Trigger);
+            return text.Length > 1 && text[0] == Ops.Trigger;
         }
         /// <summary>
         /// Parse given args to LaText Args form, continuous literals are merged into one element 
@@ -604,7 +624,7 @@ namespace LacewingNote.Common
         /// <param name="args"></param>
         public void DoInsertLine(string[] args)
         {
-            string[] largs = args.Take(2).ToArray(); 
+            string[] largs = args.Take(2).ToArray();
             int[] nums = GetNumParam(largs[0], out bool to, out bool by);
             int lines = nums[0];
             if (lines == int.MaxValue)
