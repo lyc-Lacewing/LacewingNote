@@ -468,30 +468,57 @@ namespace LacewingNote.Common
             {
                 return default;
             }
-            string[] result = new string[0];
-            string arg = string.Empty, literal = string.Empty;
-            for (int i = 0; i < args.Length; i++)
+
+            List<string> triggers = new List<string>();
+            List<int> triggersLength = new List<int>();
+            var fields = typeof(Ops).GetFields(); // Get all the operations
+            foreach (var field in fields)
             {
-                arg = args[i];
-                if (string.IsNullOrEmpty(arg))
+                if (field.Name != "Trigger")
                 {
-                    continue;
-                }
-                if (arg[0] == Ops.Trigger) // If it's a command
-                {
-                    result = result.Append(literal).ToArray(); // Append the previous literals
-                    literal = string.Empty; // Reset literal to empty
-                    result = result.Append(arg).ToArray(); // Then Append the command
-                    continue;
-                }
-                // If it's a literal
-                literal = string.Join(i == 0 ? "" : " ", literal, arg); // Add it to the current literal group
-                if (i == args.Length - 1 && !string.IsNullOrEmpty(literal)) // If it comes to the end of args and literal is not null or empty
-                {
-                    result = result.Append(literal).ToArray(); // Then append it
+                    var t = $".{field.GetValue(null)}";
+                    triggers.Add(t);
+                    if (!triggersLength.Contains(t.Length))
+                        triggersLength.Add(t.Length);
                 }
             }
-            return result;
+
+            if (triggers.Count == 0)
+                return default;
+
+            List<string> result = new List<string>();
+            int lengthCache;
+            foreach (var arg in args)
+            {
+                lengthCache = 0;
+                for (int i = 0; i < arg.Length; i++)
+                {
+                    foreach (var l in triggersLength)
+                    {
+                        if (arg[i] == Ops.Trigger && arg.Length - i >= l)
+                        {
+                            string t = arg.Substring(i, l);
+                            if (!string.IsNullOrEmpty(triggers.Find(x => x == t)))
+                            {
+                                result.Add(t);
+                                string a = arg.Substring(lengthCache, i - lengthCache);
+                                if (!string.IsNullOrEmpty(a))
+                                    result.Add(a);
+                                lengthCache = i + l + 1;
+                                i += l - 1;
+                            }
+                        }
+                        if (i == arg.Length - 1)
+                        {
+                            string a = arg.Substring(lengthCache, i - lengthCache + 1);
+                            if (!string.IsNullOrEmpty(a))
+                                result.Add(a);
+                        }
+                    }
+                }
+            }
+
+            return result.ToArray();
         }
         /// <summary>
         /// Parse a literal LaText Args element to displayed text
