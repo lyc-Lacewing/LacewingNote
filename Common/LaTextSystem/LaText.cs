@@ -12,6 +12,10 @@ namespace LacewingNote.Common.LaTextSystem
 {
     public struct LaText : INullable
     {
+        /*
+         * LaCursor: a struct that contains main cursor, alt cursor (for selection)
+         * Cursor refactor: int -> List<LaCursor>, with a set of operations to all the elements, e.g move, insert
+         */
         public bool IsNull => textCache == null;
 
         private static Dictionary<string, LaTextOp> ops = new Dictionary<string, LaTextOp>();
