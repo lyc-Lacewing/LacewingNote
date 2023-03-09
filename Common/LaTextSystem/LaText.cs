@@ -40,7 +40,6 @@ namespace LacewingNote.Common.LaTextSystem
                      var op = (LaTextOp)Activator.CreateInstance(x);
                      ops.Add(op.Trigger, op);
                  });
-            inited = true;
         }
         #endregion
 
